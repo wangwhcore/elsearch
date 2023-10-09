@@ -11,6 +11,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.rest.RestStatus;
@@ -66,6 +67,41 @@ public class ContentService {
                 return maps;
             }else {return maps;}
         }finally {
+            return maps;
+        }
+    }
+
+    public List<Map<String, Object>> findAll(String key) throws IOException {
+        SearchRequest searchRequest = new SearchRequest("goods");
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+        //精确查询，且不走分词
+//        TermQueryBuilder queryBuilder = QueryBuilders.termQuery("title", key);
+//        builder.from(0);
+//        builder.size(100);
+//        builder.query(queryBuilder);
+//        searchRequest.source(builder);
+        //匹配查询，走分词
+        MatchQueryBuilder queryBuilder2 = QueryBuilders.matchQuery("title", key);
+        builder.from(0);
+        builder.size(100);
+        builder.query(queryBuilder2);
+        searchRequest.source(builder);
+        ArrayList<Map<String, Object>> maps = new ArrayList<>();
+        try {
+            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+            for (SearchHit hit : search.getHits()) {
+                maps.add(hit.getSourceAsMap());
+            }
+            return maps;
+        } catch (Exception e) {
+            if (maps.size() == 0) {
+//                ParesHtml(key);
+                return maps;
+            } else {
+                return maps;
+            }
+        } finally {
             return maps;
         }
     }

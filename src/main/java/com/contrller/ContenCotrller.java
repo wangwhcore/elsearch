@@ -26,4 +26,9 @@ public class ContenCotrller {
     public List<Map<String, Object>> searchPage(String key,int start,int size) throws IOException {
         return contentService.searchPage(key,start,size);
     }
+    @RequestMapping("/findall")
+    @ResponseBody
+    public List<Map<String, Object>> searchPage(String name) throws IOException {
+        return contentService.findAll(name);
+    }
 }
