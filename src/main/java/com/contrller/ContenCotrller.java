@@ -131,4 +131,17 @@ public class ContenCotrller {
             }
         }
     }
+
+    @RequestMapping("/finddocs")
+    @ResponseBody
+    public List<Map<String, Object>> findDocs(String name,String comptype) throws Exception {
+        return contentService.findDocs(name,comptype);
+    }
+    @RequestMapping("/addrdcdocs")
+    @ResponseBody
+    public void addDocs() throws Exception {
+        String fileRoot = "D:\\neusoft\\docs\\markdown\\ieep-tech-doc-front\\docs\\2.x\\2.2\\lowcode\\web";
+        File file = new File(fileRoot);
+        contentService.findLocalDocs(fileRoot,file);
+    }
 }

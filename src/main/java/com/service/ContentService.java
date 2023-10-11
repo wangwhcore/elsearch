@@ -27,12 +27,14 @@ import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -316,4 +318,93 @@ public class ContentService {
         }
         br.close();
     }
+
+    public List<Map<String, Object>> findDocs(String name, String comptype) {
+        SearchRequest searchRequest = new SearchRequest("rdcdocs");
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+        //匹配查询，走分词
+        BoolQueryBuilder queryBuilder2 = QueryBuilders.boolQuery();
+        queryBuilder2.should(QueryBuilders.matchQuery("content",name));
+        builder.from(0);
+        builder.size(100);
+        builder.query(queryBuilder2);
+
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.fragmentSize(15);
+        highlightBuilder.preTags("<span style='color:red;'>");
+        highlightBuilder.postTags("</span>");
+        highlightBuilder.field("content");
+        builder.highlighter(highlightBuilder);
+        searchRequest.source(builder);
+        ArrayList<Map<String, Object>> maps = new ArrayList<>();
+        try {
+            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+            for (SearchHit hit : search.getHits()) {
+                Map<String, Object> sourceMap = hit.getSourceAsMap();
+                HighlightField highlightField = hit.getHighlightFields().get("content");
+                if(highlightField != null){
+//                    sourceMap.put("content",highlightField.getFragments()[0].toString());
+                    sourceMap.put("content2",highlightField.toString());
+                    sourceMap.put("path","http://192.168.138.53:3002/#/2.x/2.1/lowcode/web"+sourceMap.get("path"));
+                }
+                maps.add(sourceMap);
+            }
+            return maps;
+        } catch (Exception e) {
+            if (maps.size() == 0) {
+//                ParesHtml(key);
+                return maps;
+            } else {
+                return maps;
+            }
+        } finally {
+            return maps;
+        }
+    }
+    static int docs_index = 1;
+    public void addDocs(String rootPath,File file) throws Exception {
+//        BufferedReader br = new BufferedReader(new FileReader(ResourceUtils.getFile("classpath:rdcdocs/"+fileName)));
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String s;
+        List<Map<String, Object>> docs = new ArrayList<>();
+        StringBuffer content = new StringBuffer();
+        HashMap<String, Object> doc = new HashMap<String, Object>();
+        doc.put("id", docs_index);
+        doc.put("key", docs_index+"");
+        doc.put("path", fileParse.getRelatePath(rootPath,file));
+        doc.put("name", file.getPath());
+        System.out.println(file.getName()+"s");
+        while ((s = br.readLine()) != null) {
+
+            content.append(s + "\n");
+        }
+        docs_index++;
+        doc.put("content", content.toString());
+        docs.add(doc);
+        int start = 0;
+        while (start < docs.size()) {
+            int end = 0;
+            if (start + 1000 <= docs.size()) {
+                end = start + 1000;
+            } else {
+                end = docs.size();
+            }
+            List<Map<String, Object>> sublist = docs.subList(start, end);
+            this.indexDocs("rdcdocs", "_doc", sublist);
+            start += 1000;
+        }
+        br.close();
+    }
+
+    public void findLocalDocs(String rootPath,File ff) throws Exception {
+        if(ff.isDirectory()){
+            for(File f: ff.listFiles()){
+                this.findLocalDocs(rootPath,f);
+            }
+        }else if(ff.getName().endsWith(".md")){
+            this.addDocs(rootPath,ff);
+        }
+    }
+
 }
