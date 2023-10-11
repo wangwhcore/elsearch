@@ -40,133 +40,17 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class ContentService {
+public class ContentService extends BaseSeachService{
     @Autowired
     private Jsousn jsousn;
     @Autowired
-    private RestHighLevelClient restHighLevelClient;
-    @Autowired
     private FileParse fileParse;
-    //增加数据
-    public Boolean ParesHtml(String key) throws IOException {
-        List<Content> contents = jsousn.contentList(key);
-        System.out.println(contents.toString());
-        BulkRequest bulkRequest = new BulkRequest();
-        for (Content content : contents) {
-            bulkRequest.add(
-                    new IndexRequest("goods").source(JSON.toJSONString(content), XContentType.JSON)
-            );
-        }
-        BulkResponse bulk = restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-        return !bulk.hasFailures();
-    }
-    //查宿数据
-    public List<Map<String, Object>> searchPage(String key, int start, int size) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(key);
-        SearchSourceBuilder builder = new SearchSourceBuilder();
-        builder.from(start);
-        builder.size(size);
-        TermQueryBuilder queryBuilder = QueryBuilders.termQuery("title", key);
-        builder.query(queryBuilder);
-        searchRequest.source(builder);
-        ArrayList<Map<String, Object>> maps = new ArrayList<>();
-        try {
-            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            for (SearchHit hit : search.getHits()) {
-                maps.add(hit.getSourceAsMap());
-            }
-            return maps;
-        }catch (Exception e){
-            if (maps.size()==0){
-                ParesHtml(key);
-                return maps;
-            }else {return maps;}
-        }finally {
-            return maps;
-        }
-    }
 
-//    public boolean addContent(String key){
-//        List<Content> contents = null;
-//        System.out.println(contents.toString());
-//        BulkRequest bulkRequest = new BulkRequest();
-//        for (Content content : contents) {
-//            bulkRequest.add(
-//                    new IndexRequest("goods").source(JSON.toJSONString(content), XContentType.JSON)
-//            );
-//        }
-//        BulkResponse bulk = restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-//        return !bulk.hasFailures();
-//    }
-    public void indexDocs(String indexName, String indexType, List<Map<String, Object>> docs) {
-        try {
-            if (null == docs || docs.size() <= 0) {
-                return;
-            }
-            BulkRequest request = new BulkRequest();
-            for (Map<String, Object> doc : docs) {
-                request.add(new IndexRequest(indexName, indexType, (String)doc.get("key"))
-                        .source(doc));
-            }
-            BulkResponse bulkResponse = restHighLevelClient.bulk(request, RequestOptions.DEFAULT);
-            if (bulkResponse != null) {
-                for (BulkItemResponse bulkItemResponse : bulkResponse) {
-                    DocWriteResponse itemResponse = bulkItemResponse.getResponse();
-
-                    if (bulkItemResponse.getOpType() == DocWriteRequest.OpType.INDEX
-                            || bulkItemResponse.getOpType() == DocWriteRequest.OpType.CREATE) {
-                        IndexResponse indexResponse = (IndexResponse) itemResponse;
-                        System.out.println("新增成功" + indexResponse.toString());
-                    } else if (bulkItemResponse.getOpType() == DocWriteRequest.OpType.UPDATE) {
-                        UpdateResponse updateResponse = (UpdateResponse) itemResponse;
-                        System.out.println("修改成功" + updateResponse.toString());
-                    } else if (bulkItemResponse.getOpType() == DocWriteRequest.OpType.DELETE) {
-                        DeleteResponse deleteResponse = (DeleteResponse) itemResponse;
-                        System.out.println("删除成功" + deleteResponse.toString());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-        public List<Map<String, Object>> findAll(String key) throws IOException {
-        SearchRequest searchRequest = new SearchRequest("goods");
-        SearchSourceBuilder builder = new SearchSourceBuilder();
-        //精确查询，且不走分词
-//        TermQueryBuilder queryBuilder = QueryBuilders.termQuery("title", key);
-//        builder.from(0);
-//        builder.size(100);
-//        builder.query(queryBuilder);
-//        searchRequest.source(builder);
-        //匹配查询，走分词
-        MatchQueryBuilder queryBuilder2 = QueryBuilders.matchQuery("title", key);
-        builder.from(0);
-        builder.size(100);
-        builder.query(queryBuilder2);
-        searchRequest.source(builder);
-        ArrayList<Map<String, Object>> maps = new ArrayList<>();
-        try {
-            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-
-            for (SearchHit hit : search.getHits()) {
-                maps.add(hit.getSourceAsMap());
-            }
-            return maps;
-        } catch (Exception e) {
-            if (maps.size() == 0) {
-//                ParesHtml(key);
-                return maps;
-            } else {
-                return maps;
-            }
-        } finally {
-            return maps;
-        }
-    }
-
+    /**
+     * 模糊查询 事件 表中，所有的事件
+     * @param name
+     * @return
+     */
     public List<Map<String, Object>> findEvent(String name) {
         SearchRequest searchRequest = new SearchRequest("rdcevent");
         SearchSourceBuilder builder = new SearchSourceBuilder();
@@ -196,6 +80,11 @@ public class ContentService {
         }
     }
 
+    /**
+     * 支持高亮查询事件
+     * @param name
+     * @return
+     */
     public List<Map<String, Object>> findEventWithHighLight(String name) {
         SearchRequest searchRequest = new SearchRequest("rdcevent");
         SearchSourceBuilder builder = new SearchSourceBuilder();
@@ -240,6 +129,12 @@ public class ContentService {
         }
     }
 
+    /**
+     * 查询组件示例
+     * @param name
+     * @param comptype
+     * @return
+     */
     public List<Map<String, Object>> findComps(String name, String comptype) {
         SearchRequest searchRequest = new SearchRequest("rdccomponents");
         SearchSourceBuilder builder = new SearchSourceBuilder();
@@ -271,6 +166,10 @@ public class ContentService {
         }
     }
 
+    /**
+     * es中使用 id作为主键，这里试用与首次全量初始化（会覆盖相同ID内容）
+     * 如需追加，需要另外写方法先获取 count后，再绑定 i（id主键）   get /rdccomps/_count
+     */
     static int i = 1;
     public void addComponents(String fileName) throws Exception {
         BufferedReader br = new BufferedReader(new FileReader(ResourceUtils.getFile("classpath:rdccomps/"+fileName)));
@@ -318,93 +217,4 @@ public class ContentService {
         }
         br.close();
     }
-
-    public List<Map<String, Object>> findDocs(String name, String comptype) {
-        SearchRequest searchRequest = new SearchRequest("rdcdocs");
-        SearchSourceBuilder builder = new SearchSourceBuilder();
-        //匹配查询，走分词
-        BoolQueryBuilder queryBuilder2 = QueryBuilders.boolQuery();
-        queryBuilder2.should(QueryBuilders.matchQuery("content",name));
-        builder.from(0);
-        builder.size(100);
-        builder.query(queryBuilder2);
-
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.fragmentSize(15);
-        highlightBuilder.preTags("<span style='color:red;'>");
-        highlightBuilder.postTags("</span>");
-        highlightBuilder.field("content");
-        builder.highlighter(highlightBuilder);
-        searchRequest.source(builder);
-        ArrayList<Map<String, Object>> maps = new ArrayList<>();
-        try {
-            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-
-            for (SearchHit hit : search.getHits()) {
-                Map<String, Object> sourceMap = hit.getSourceAsMap();
-                HighlightField highlightField = hit.getHighlightFields().get("content");
-                if(highlightField != null){
-//                    sourceMap.put("content",highlightField.getFragments()[0].toString());
-                    sourceMap.put("content2",highlightField.toString());
-                    sourceMap.put("path","http://192.168.138.53:3002/#/2.x/2.1/lowcode/web"+sourceMap.get("path"));
-                }
-                maps.add(sourceMap);
-            }
-            return maps;
-        } catch (Exception e) {
-            if (maps.size() == 0) {
-//                ParesHtml(key);
-                return maps;
-            } else {
-                return maps;
-            }
-        } finally {
-            return maps;
-        }
-    }
-    static int docs_index = 1;
-    public void addDocs(String rootPath,File file) throws Exception {
-//        BufferedReader br = new BufferedReader(new FileReader(ResourceUtils.getFile("classpath:rdcdocs/"+fileName)));
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String s;
-        List<Map<String, Object>> docs = new ArrayList<>();
-        StringBuffer content = new StringBuffer();
-        HashMap<String, Object> doc = new HashMap<String, Object>();
-        doc.put("id", docs_index);
-        doc.put("key", docs_index+"");
-        doc.put("path", fileParse.getRelatePath(rootPath,file));
-        doc.put("name", file.getPath());
-        System.out.println(file.getName()+"s");
-        while ((s = br.readLine()) != null) {
-
-            content.append(s + "\n");
-        }
-        docs_index++;
-        doc.put("content", content.toString());
-        docs.add(doc);
-        int start = 0;
-        while (start < docs.size()) {
-            int end = 0;
-            if (start + 1000 <= docs.size()) {
-                end = start + 1000;
-            } else {
-                end = docs.size();
-            }
-            List<Map<String, Object>> sublist = docs.subList(start, end);
-            this.indexDocs("rdcdocs", "_doc", sublist);
-            start += 1000;
-        }
-        br.close();
-    }
-
-    public void findLocalDocs(String rootPath,File ff) throws Exception {
-        if(ff.isDirectory()){
-            for(File f: ff.listFiles()){
-                this.findLocalDocs(rootPath,f);
-            }
-        }else if(ff.getName().endsWith(".md")){
-            this.addDocs(rootPath,ff);
-        }
-    }
-
 }

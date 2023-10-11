@@ -2,6 +2,7 @@ package com.contrller;
 
 import com.pojo.Content;
 import com.service.ContentService;
+import com.service.RdcDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ResourceUtils;
@@ -20,26 +21,27 @@ import java.util.Map;
 public class ContenCotrller {
     @Autowired
     private ContentService contentService;
-    @RequestMapping("/goods")
-    @ResponseBody
-    public Boolean goods(String key) throws IOException {
-        return contentService.ParesHtml(key);
-    }
-    @RequestMapping("/goods/i")
-    @ResponseBody
-    public List<Map<String, Object>> searchPage(String key,int start,int size) throws IOException {
-        return contentService.searchPage(key,start,size);
-    }
-    @RequestMapping("/findall")
-    @ResponseBody
-    public List<Map<String, Object>> searchPage(String name) throws IOException {
-        return contentService.findAll(name);
-    }
+    @Autowired
+    private RdcDocsService rdcDocsService;
+
+    /**
+     * 查找事件示例
+     * @param name
+     * @return
+     * @throws IOException
+     */
     @RequestMapping("/findevent")
     @ResponseBody
     public List<Map<String, Object>> searchEvent(String name) throws IOException {
         return contentService.findEvent(name);
     }
+
+    /**
+     * 返回标准map格式的响应(暂未使用）
+     * @param name
+     * @return
+     * @throws IOException
+     */
     @RequestMapping("/findeventmap")
     @ResponseBody
     public Map searchEventMap(String name) throws IOException {
@@ -54,6 +56,13 @@ public class ContenCotrller {
 
         return resultmap;
     }
+
+    /**
+     * 返回高亮的事件（暂未使用）
+     * @param name
+     * @return
+     * @throws IOException
+     */
     @RequestMapping("/findeventmaphighlight")
     @ResponseBody
     public Map searchEventMapWithColor(String name) throws IOException {
@@ -68,6 +77,11 @@ public class ContenCotrller {
 
         return resultmap;
     }
+
+    /**
+     * 添加本地文件，解析后入es库
+     * @throws Exception
+     */
     @RequestMapping("/addevent")
     @ResponseBody
     public void addEvents() throws Exception {
@@ -115,6 +129,14 @@ public class ContenCotrller {
         }
         br.close();
     }
+
+    /**
+     * 查找组件示例
+     * @param name
+     * @param comptype
+     * @return
+     * @throws IOException
+     */
     @RequestMapping("/findcomps")
     @ResponseBody
     public List<Map<String, Object>> findComps(String name,String comptype ) throws IOException {
@@ -132,16 +154,28 @@ public class ContenCotrller {
         }
     }
 
+    /**
+     * 搜索帮助文档
+     * @param name
+     * @param comptype
+     * @return
+     * @throws Exception
+     */
     @RequestMapping("/finddocs")
     @ResponseBody
     public List<Map<String, Object>> findDocs(String name,String comptype) throws Exception {
-        return contentService.findDocs(name,comptype);
+        return rdcDocsService.findDocs(name,comptype);
     }
+
+    /**
+     * 添加指定文件夹下的文档到es库
+     * @throws Exception
+     */
     @RequestMapping("/addrdcdocs")
     @ResponseBody
     public void addDocs() throws Exception {
         String fileRoot = "D:\\neusoft\\docs\\markdown\\ieep-tech-doc-front\\docs\\2.x\\2.2\\lowcode\\web";
         File file = new File(fileRoot);
-        contentService.findLocalDocs(fileRoot,file);
+        rdcDocsService.findLocalDocs(fileRoot,file);
     }
 }
