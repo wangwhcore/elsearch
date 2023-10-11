@@ -1,47 +1,16 @@
 package com;
 
 import com.Util.Jsousn;
-import com.alibaba.fastjson.JSON;
-import com.pojo.Content;
-import com.pojo.User01;
-import org.apache.catalina.User;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@SpringBootTest
-class ElsearchApplicationTests {
-    @Autowired
-    private RestHighLevelClient restHighLevelClient;
-    @Autowired
-    private Jsousn jsousn;
+class ElsearchApplicationTests2 {
 //    @Test
 //    void contextLoads() throws IOException {
 //        CreateIndexRequest user03 = new CreateIndexRequest("user04");
@@ -98,9 +67,11 @@ class ElsearchApplicationTests {
 //    }
     @Test
     void test06() throws IOException{
-        String input = "<s1>Human:RDC中页面:比价助手 组件名称:FormCardHook1 业务名称:\"别名\",1C编辑卡片2 组件,元属性/元数据怎么编写?</s1>";
-
-        String pattern = "组件名称:(\\w+\\d+) 业务名称:.*?(\\d+C.+\\d+) 组件,元属性/元数据";
+//      String input = "<s1>Human:RDC中页面:定价单-查看-单物料 组件名称:SelectHook 业务名称：\"采购组织\",F下拉框 组件,元属性/元数据怎么编写？</s1>";
+//        String input = "<s1>Human:RDC中页面:定价单-查看-单物料 组件名称:SelectHook 业务名称:\"采购组织\",F下拉框 组件,元属性/元数据怎么编写?</s1>";
+        String input =
+        "<s1>Human:RDC中页面:查看物料组分类列表 组件名称:QzingCategoryList 业务名称: \"别名\",D分类列表 组件,元属性/元数据怎么编写？</s1>";
+        String pattern = "组件名称:(\\w+) 业务名称:.*?(\\w+\\d?[^\\s]+)";
 
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(input);
@@ -109,5 +80,6 @@ class ElsearchApplicationTests {
             System.out.println(m.group(1));
             System.out.println(m.group(2));
         }
+
     }
 }
