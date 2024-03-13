@@ -3,6 +3,7 @@ package com.contrller;
 import com.pojo.Content;
 import com.service.ContentService;
 import com.service.RdcDocsService;
+import com.service.WordI18nService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ResourceUtils;
@@ -23,6 +24,8 @@ public class ContenCotrller {
     private ContentService contentService;
     @Autowired
     private RdcDocsService rdcDocsService;
+    @Autowired
+    private WordI18nService wordI18nService;
 
     /**
      * 查找事件示例
@@ -177,5 +180,30 @@ public class ContenCotrller {
         String fileRoot = "D:\\neusoft\\docs\\markdown\\ieep-tech-doc-front\\docs\\2.x\\2.2\\lowcode\\web";
         File file = new File(fileRoot);
         rdcDocsService.findLocalDocs(fileRoot,file);
+    }
+
+    /**
+     * 搜索国际化词条
+     * @param name
+     * @param comptype
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping("/findwords")
+    @ResponseBody
+    public List<Map<String, Object>> findWords(String name,String comptype) throws Exception {
+        return wordI18nService.findDocs(name,comptype);
+    }
+
+    /**
+     * 添加指定文件夹下的文档到es库
+     * @throws Exception
+     */
+    @RequestMapping("/addwords")
+    @ResponseBody
+    public void addWords() throws Exception {
+        String fileRoot = "D:\\neusoft\\docs\\ieep-tech-doc-front2\\pageComp\\国际化词条-srm.txt";
+        File file = new File(fileRoot);
+        wordI18nService.addWords(fileRoot,file);
     }
 }

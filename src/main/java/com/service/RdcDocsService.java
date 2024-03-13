@@ -113,7 +113,8 @@ public class RdcDocsService extends BaseSeachService{
 //                    sourceMap.put("content",highlightField.getFragments()[0].toString());
                     sourceMap.put("content2", highlightField.toString());
                     //这里是为了拼接跳转链接，不应该固定在这里
-                    sourceMap.put("path", "http://192.168.138.53:3002/#/2.x/2.1/lowcode/web" + sourceMap.get("path"));
+//                    sourceMap.put("path", "http://192.168.138.53:3002/#/2.x/2.1/lowcode/web" + sourceMap.get("path"));
+                    sourceMap.put("path", fileParse.getLinkPath(sourceMap.get("path").toString()));
                 }
                 maps.add(sourceMap);
             }

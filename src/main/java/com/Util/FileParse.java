@@ -34,4 +34,8 @@ public class FileParse {
     public String  getRelatePath(String rootPath,File f){
         return f.getPath().replace(rootPath,"");
     }
+
+    public String getLinkPath(String filePath) {
+        return "http://10.10.20.103/wiki/zingnext-paas/2.x/2.2/lowcode/web" + filePath.replace(".md","");
+    }
 }
